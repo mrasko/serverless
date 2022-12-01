@@ -4,7 +4,7 @@ const expect = require('chai').expect;
 const _ = require('lodash');
 
 const SDK = require('../../../../../../lib/plugins/aws/provider');
-const Serverless = require('../../../../../../lib/Serverless');
+const Serverless = require('../../../../../../lib/serverless');
 
 describe('#naming()', () => {
   let options;
@@ -15,6 +15,8 @@ describe('#naming()', () => {
     options = {
       stage: 'dev',
       region: 'us-east-1',
+      commands: [],
+      options: {},
     };
     serverless = new Serverless(options);
     sdk = new SDK(serverless, options);
@@ -99,6 +101,22 @@ describe('#naming()', () => {
       serverless.service.service = 'myService';
       serverless.service.provider.stage = sdk.naming.provider.getStage();
       expect(sdk.naming.getStackName()).to.equal('app-dev-testApp');
+    });
+  });
+
+  describe('#getStackChangeSetName()', () => {
+    it('should use the service name & stage if custom stack name not provided', () => {
+      serverless.service.service = 'myService';
+      expect(sdk.naming.getStackChangeSetName()).to.equal(
+        `${serverless.service.service}-${sdk.naming.provider.getStage()}-change-set`
+      );
+    });
+
+    it('should use the custom stack name if provided', () => {
+      serverless.service.provider.stackName = 'app-dev-testApp';
+      serverless.service.service = 'myService';
+      serverless.service.provider.stage = sdk.naming.provider.getStage();
+      expect(sdk.naming.getStackChangeSetName()).to.equal('app-dev-testApp-change-set');
     });
   });
 
@@ -430,8 +448,12 @@ describe('#naming()', () => {
   describe('#getEndpointModelLogicalId()', () => {
     it('', () => {
       expect(
-        sdk.naming.getEndpointModelLogicalId('ResourceId', 'get', 'application/json')
-      ).to.equal('ApiGatewayMethodResourceIdGetApplicationJsonModel');
+        sdk.naming.getEndpointModelLogicalId(
+          'ResourceId',
+          'get',
+          'application/x-www-form-urlencoded'
+        )
+      ).to.equal('ApiGatewayMethodResourceIdGetApplicationXWwwFormUrlencodedModel');
     });
   });
 
@@ -794,7 +816,7 @@ describe('#naming()', () => {
       );
     });
 
-    it('should return a prefixed unique identifer of not longer than 32 characters if alb.targetGroupPrefix is set', () => {
+    it('should return a prefixed unique identifier of not longer than 32 characters if alb.targetGroupPrefix is set', () => {
       serverless.service.service = 'myService';
       serverless.service.provider.alb = {};
       serverless.service.provider.alb.targetGroupPrefix = 'myPrefix-';
@@ -1023,6 +1045,38 @@ describe('#naming()', () => {
       expect(sdk.naming.getLambdaAuthorizerHttpApiPermissionLogicalId('authorizerName')).to.equal(
         'AuthorizerNameLambdaAuthorizerPermissionHttpApi'
       );
+    });
+  });
+
+  describe('#getLambdaFnUrlPermissionLogicalId()', () => {
+    it('should normalize the name and append correct suffix', () => {
+      expect(sdk.naming.getLambdaFnUrlPermissionLogicalId('fnName')).to.equal(
+        'FnNameLambdaPermissionFnUrl'
+      );
+    });
+  });
+
+  describe('#getHttpApiName()', () => {
+    it('should return the composition of service & stage name if custom name not provided and shouldStartNameWithService is true', () => {
+      serverless.service.service = 'myService';
+      serverless.service.provider.httpApi = { shouldStartNameWithService: true };
+      expect(sdk.naming.getHttpApiName()).to.equal(
+        `${serverless.service.service}-${sdk.naming.provider.getStage()}`
+      );
+    });
+
+    it('should return the composition of stage & service name if custom name not provided', () => {
+      serverless.service.service = 'myService';
+      expect(sdk.naming.getHttpApiName()).to.equal(
+        `${sdk.naming.provider.getStage()}-${serverless.service.service}`
+      );
+    });
+
+    it('should return the custom api name if provided', () => {
+      serverless.service.provider.httpApi = { name: 'app-dev-testApi' };
+      serverless.service.service = 'myService';
+      serverless.service.provider.stage = sdk.naming.provider.getStage();
+      expect(sdk.naming.getHttpApiName()).to.equal('app-dev-testApi');
     });
   });
 });

@@ -13,6 +13,16 @@ describe('AwsCompileMSKEvents', () => {
   const enabled = false;
   const startingPosition = 'LATEST';
   const batchSize = 5000;
+  const maximumBatchingWindow = 10;
+  const saslScram512 =
+    'arn:aws:secretsmanager:us-east-1:111111111111:secret:AmazonMSK_a1a1a1a1a1a1a1a1';
+  const consumerGroupId = 'TestConsumerGroupId';
+  const sourceAccessConfigurations = [
+    {
+      Type: 'SASL_SCRAM_512_AUTH',
+      URI: saslScram512,
+    },
+  ];
 
   describe('when there are msk events defined', () => {
     let minimalEventSourceMappingResource;
@@ -25,7 +35,7 @@ describe('AwsCompileMSKEvents', () => {
         fixture: 'function',
         configExt: {
           functions: {
-            foo: {
+            basic: {
               events: [
                 {
                   msk: {
@@ -42,8 +52,11 @@ describe('AwsCompileMSKEvents', () => {
                     topic,
                     arn,
                     batchSize,
+                    maximumBatchingWindow,
                     enabled,
                     startingPosition,
+                    saslScram512,
+                    consumerGroupId,
                   },
                 },
               ],
@@ -54,7 +67,7 @@ describe('AwsCompileMSKEvents', () => {
       });
       naming = awsNaming;
       minimalEventSourceMappingResource =
-        cfTemplate.Resources[naming.getMSKEventLogicalId('foo', 'ClusterName', 'TestingTopic')];
+        cfTemplate.Resources[naming.getMSKEventLogicalId('basic', 'ClusterName', 'TestingTopic')];
       allParamsEventSourceMappingResource =
         cfTemplate.Resources[naming.getMSKEventLogicalId('other', 'ClusterName', 'TestingTopic')];
       defaultIamRole = cfTemplate.Resources.IamRoleLambdaExecution;
@@ -66,7 +79,7 @@ describe('AwsCompileMSKEvents', () => {
         StartingPosition: 'TRIM_HORIZON',
         Topics: [topic],
         FunctionName: {
-          'Fn::GetAtt': [naming.getLambdaLogicalId('foo'), 'Arn'],
+          'Fn::GetAtt': [naming.getLambdaLogicalId('basic'), 'Arn'],
         },
       });
     });
@@ -102,12 +115,17 @@ describe('AwsCompileMSKEvents', () => {
     it('should correctly complie EventSourceMapping resource with all parameters', () => {
       expect(allParamsEventSourceMappingResource.Properties).to.deep.equal({
         BatchSize: batchSize,
+        MaximumBatchingWindowInSeconds: maximumBatchingWindow,
         Enabled: enabled,
         EventSourceArn: arn,
         StartingPosition: startingPosition,
+        SourceAccessConfigurations: sourceAccessConfigurations,
         Topics: [topic],
         FunctionName: {
           'Fn::GetAtt': [naming.getLambdaLogicalId('other'), 'Arn'],
+        },
+        AmazonManagedKafkaEventSourceConfig: {
+          ConsumerGroupId: consumerGroupId,
         },
       });
     });

@@ -1,8 +1,4 @@
-⚡ **Serverless Inc. is hiring to build the next generation of serverless development tools, [join us!](https://www.serverless.com/company/jobs/)**
-
----
-
-[![Serverless Application Framework AWS Lambda API Gateway](https://s3.amazonaws.com/assets.github.serverless/readme-serverless-framework.gif)](http://serverless.com)
+[![Serverless Application Framework AWS Lambda API Gateway](https://s3.amazonaws.com/assets.github.serverless/readme-serverless-framework.gif)](https://serverless.com)
 
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
 [![Build Status](https://github.com/serverless/serverless/workflows/Integrate/badge.svg)](https://github.com/serverless/serverless/actions?query=workflow%3AIntegrate)
@@ -12,144 +8,127 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/serverless/serverless/badge.svg)](https://snyk.io/test/github/serverless/serverless)
 [![license](https://img.shields.io/npm/l/serverless.svg)](https://www.npmjs.com/package/serverless)
 
-<p align="center">
-  <span>English</span> |
-  <a href="./README_CN.md">简体中文</a>
-</p>
+[Website](http://www.serverless.com) • [Docs](https://serverless.com/framework/docs/) • [Community Slack](https://serverless.com/slack) • [Forum](http://forum.serverless.com) • [Twitter](https://twitter.com/goserverless) • [Meetups](https://www.meetup.com/pro/serverless/) • [We're Hiring](https://serverless.com/company/jobs/) • [简体中文](./README_CN.md)
 
-[Website](http://www.serverless.com) • [Docs](https://serverless.com/framework/docs/) • [Newsletter](https://serverless.com/subscribe/) • [Swag](https://teespring.com/stores/serverless) • [Gitter](https://gitter.im/serverless/serverless) • [Forum](http://forum.serverless.com) • [Meetups](https://www.meetup.com/pro/serverless/) • [Twitter](https://twitter.com/goserverless) • [We're Hiring](https://serverless.com/company/jobs/)
+**The Serverless Framework** – Build applications on AWS Lambda and other next-gen cloud services, that auto-scale and only charge you when they run. This lowers the total cost of running and operating your apps, enabling you to build more and manage less.
 
-**The Serverless Framework** – Build applications comprised of microservices that run in response to events, auto-scale for you, and only charge you when they run. This lowers the total cost of maintaining your apps, enabling you to build more logic, faster.
+The Serverless Framework is a command-line tool that uses easy and approachable YAML syntax to deploy both your code and cloud infrastructure needed to make tons of serverless application use-cases. It's a multi-language framework that supports Node.js, Typescript, Python, Go, Java, and more. It's also completely extensible via over 1,000 plugins that can add more serverless use-cases and workflows to the Framework.
 
-The Framework uses new event-driven compute services, like AWS Lambda, Google Cloud Functions, and more. It's a command-line tool, providing scaffolding, workflow automation and best practices for developing and deploying your serverless architecture. It's also completely extensible via plugins.
-
-Check out the [Serverless Framework Dashboard](https://app.serverless.com) for monitoring, troubleshooting, ci/cd and more features for serverless teams.
-
-Serverless is actively maintained by [Serverless Inc](https://www.serverless.com).
+Actively maintained by [Serverless Inc](https://www.serverless.com).
 
 ## Contents
 
-<img align="right" width="400" src="https://s3-us-west-2.amazonaws.com/assets.site.serverless.com/email/sls-getting-started.gif" />
-
 - [Quick Start](#quick-start)
-- [Examples](https://github.com/serverless/examples)
-- [Services](#services)
 - [Features](#features)
 - [Plugins](https://github.com/serverless/plugins)
 - [Contributing](#contributing)
 - [Community](#community)
-- [Consultants](#consultants)
 - [Licensing](#licensing)
 - [Previous Version 0.5.x](#v.5)
 
 ## <a name="quick-start"></a>Quick Start
 
-1. **Install via npm:**
+### Installation
+
+Install the `serverless` CLI via NPM:
 
 ```bash
 npm install -g serverless
 ```
 
-2. **Set-up your [Provider Credentials](./docs/providers/aws/guide/credentials.md)**. [Watch the video on setting up credentials](https://youtu.be/VUKDRoUdMek)
+Note: If you don’t already have Node on your machine, [install it first](https://nodejs.org/). If you don't want to install Node or NPM, you can [install `serverless` as a standalone binary](https://www.serverless.com/framework/docs/install-standalone).
 
-3. **Create a Service:**
+### Getting started
 
-You can create a new service or [install existing services](#how-to-install-a-service).
-
-```bash
-# Create a new Serverless Service/Project
-serverless create --template aws-nodejs --path my-service
-# Change into the newly created directory
-cd my-service
-```
-
-4. **Deploy a Service:**
-
-Use this when you have made changes to your Functions, Events or Resources in `serverless.yml` or you simply want to deploy all changes within your Service at the same time.
+To create your first project, run the command below and follow the prompts:
 
 ```bash
-serverless deploy -v
+# Create a new serverless project
+serverless
+
+# Move into the newly created directory
+cd your-service-name
 ```
 
-5. **Deploy the Function:**
+The `serverless` command will guide you to:
 
-Use this to quickly upload and overwrite your AWS Lambda code on AWS, allowing you to develop faster.
+1. create a new project
+2. configure [AWS credentials](https://serverless.com/framework/docs/providers/aws/guide/credentials/)
+3. optionally set up a free [Serverless Dashboard](https://www.serverless.com/monitoring) account to monitor and troubleshoot your project
+
+_Note: users based in China get a setup centered around the chinese [Tencent](https://intl.cloud.tencent.com/) provider. To use AWS instead, set the following environment variable: `SERVERLESS_PLATFORM_VENDOR=aws`._
+
+Your new serverless project should contain a `serverless.yml` file. This file defines what will be deployed to AWS: functions, events, resources and more. You can learn more about this in the [Core Concepts documentation](https://www.serverless.com/framework/docs/providers/aws/guide/intro).
+
+If the templates proposed by `serverless` do not fit your needs, check out the [project examples from Serverless Inc. and our community](https://www.serverless.com/examples/). You can install any example by passing a GitHub URL using the `--template-url` option:
+
+```sh
+serverless --template-url=https://github.com/serverless/examples/tree/v3/...
+```
+
+### Deploying
+
+If you haven't done so already within the `serverless` command, you can deploy the project at any time by running:
 
 ```bash
-serverless deploy function -f hello
+serverless deploy
 ```
 
-6. **Invoke the Function on AWS:**
+The deployed functions, resources and URLs will be displayed in the command output.
 
-Invokes an AWS Lambda Function on AWS and returns logs.
+[Learn more about deploying](https://www.serverless.com/framework/docs/providers/aws/guide/deploying).
+
+### Invoking function
+
+If you deployed an API, querying its URL will trigger the associated Lambda function. You can find that URL in the `serverless deploy` output, or retrieve it later via `serverless info`.
+
+If you deployed a function that isn't exposed via a URL, you can invoke it via:
 
 ```bash
-serverless invoke -f hello -l
+serverless invoke -f hello
+
+# Invoke and display logs:
+serverless invoke -f hello --log
 ```
 
-7. **Invoke the Function on your machine:**
+### Fetching function logs
 
-Invokes an AWS Lambda Function on your local machine and returns logs.
+All logs generated by a function's invocation are automatically stored in AWS CloudWatch. Retrieve those logs in the CLI via:
 
 ```bash
-serverless invoke local -f hello -l
+serverless logs -f hello
+
+# Tail logs
+serverless logs -f hello --tail
 ```
 
-8. **Fetch the Function Logs:**
+### Monitoring
 
-Open up a separate tab in your console and stream all logs for a specific Function using this command.
+You can monitor and debug Lambda functions and APIs via the [Serverless Dashboard](https://www.serverless.com/monitoring).
+
+To set it up, run the following command in an existing project and follow the prompts:
 
 ```bash
-serverless logs -f hello -t
+serverless
 ```
 
-9. **Remove the Service:**
+### Remove your service
 
-Removes all Functions, Events and Resources from your AWS account.
+If you want to delete your service, run `serverless remove`. This will delete all the AWS resources created by your project and ensure that you don't incur any unexpected charges. It will also remove the service from Serverless Dashboard.
 
 ```bash
 serverless remove
 ```
 
-### How to Install a Service:
+## What's next
 
-This is a convenience method to install a pre-made Serverless Service locally by downloading the Github repo and unzipping it. Services are listed below.
+Now that Serverless Framework is installed, here is what you can do next:
 
-```bash
-serverless install -u https://github.com/your-url-to-the-serverless-service
-```
-
-Check out the [Serverless Framework Guide](./docs/providers/aws/guide/README.md) for more information.
-
-## <a name="services"></a>Services (V1.0)
-
-The following are services you can instantly install and use by running `serverless install --url <service-github-url>`
-
-- [serverless-examples](https://github.com/serverless/examples)
-- [CRUD](https://github.com/pmuens/serverless-crud) - CRUD service, [Scala Port](https://github.com/jahangirmohammed/serverless-crud-scala)
-- [CRUD with FaunaDB](https://github.com/faunadb/serverless-crud) - CRUD service using FaunaDB
-- [CRUD with S3](https://github.com/tscanlin/serverless-s3-crud) - CRUD service using S3
-- [CRUD with Flask and SQLAlchemy](https://github.com/jetbridge/sls-flask) - Python [CRUD API service](https://blog.jetbridge.com/framework/) with Flask, SQLAlchemy and Swagger
-- [GraphQL Boilerplate](https://github.com/serverless/serverless-graphql) - GraphQL application Boilerplate service
-- [Authentication](https://github.com/laardee/serverless-authentication-boilerplate) - Authentication boilerplate service
-- [Mailer](https://github.com/eahefnawy/serverless-mailer) - Service for sending emails
-- [Kinesis streams](https://github.com/pmuens/serverless-kinesis-streams) - Service to showcase Kinesis stream support
-- [DynamoDB streams](https://github.com/pmuens/serverless-dynamodb-streams) - Service to showcase DynamoDB stream support
-- [Landingpage backend](https://github.com/pmuens/serverless-landingpage-backend) - Landingpage backend service to store E-Mail addresses
-- [Facebook Messenger Chatbot](https://github.com/pmuens/serverless-facebook-messenger-bot) - Chatbot for the Facebook Messenger platform
-- [Lambda chaining](https://github.com/pmuens/serverless-lambda-chaining) - Service which chains Lambdas through SNS
-- [Secured API](https://github.com/pmuens/serverless-secured-api) - Service which exposes an API key accessible API
-- [Authorizer](https://github.com/eahefnawy/serverless-authorizer) - Service that uses API Gateway custom authorizers
-- [Thumbnails](https://github.com/eahefnawy/serverless-thumbnails) - Service that takes an image url and returns a 100x100 thumbnail
-- [Boilerplate](https://github.com/eahefnawy/serverless-boilerplate) - Opinionated boilerplate
-- [ES6 + Jest](https://github.com/americansystems/serverless-es6-jest) - ES6 + Jest Boilerplate
-- [PHP](https://github.com/ZeroSharp/serverless-php) - Call a PHP function from your lambda
-- [Ruby](https://github.com/stewartlord/serverless-ruby) - Call a Ruby function from your lambda
-- [Slack App](https://github.com/johnagan/serverless-slack-app) - Slack App Boilerplate with OAuth and Bot actions
-- [Swift](https://github.com/choefele/swift-lambda-app) - Full-featured project template to develop Lambda functions in Swift
-- [Cloudwatch Alerts on Slack](https://github.com/dav009/serverless-aws-alarms-notifier) - Get AWS Cloudwatch alerts notifications on Slack
-
-**Note**: the `serverless install` command will only work on V1.0 or later.
+- Follow the [tutorial to create an example HTTP API with Node](https://www.serverless.com/framework/docs/tutorial)
+- Learn about the [core concepts in Serverless Framework](https://www.serverless.com/framework/docs/providers/aws/guide/intro)
+- [Redeploy a single function](https://www.serverless.com/framework/docs/providers/aws/guide/deploying#deploy-function) for iterating faster while developing
+- Discover all the [events that can trigger Lambda functions](https://www.serverless.com/framework/docs/providers/aws/guide/events)
+- Check out the [plugins registry](https://www.serverless.com/plugins)
 
 ## <a name="features"></a>Features
 
@@ -165,6 +144,24 @@ The following are services you can instantly install and use by running `serverl
 - An ecosystem of serverless services and plugins.
 - A passionate and welcoming community!
 
+<br>
+
+<table>
+  <tr>
+    <td align="center">
+      <br><strong>Try <a href="https://www.serverless.com/console/">Serverless Console</a></strong><br><br>
+      Monitor, observe, and trace your serverless architectures.<br>
+      Real-time dev mode provides streaming logs from your AWS Lambda Functions.<br><br>
+      Get started instantly with <code>serverless --console</code><br>
+      -or-<br>
+      <a href="https://bit.ly/3kL8ACL">Register</a>
+      <img src="https://user-images.githubusercontent.com/3837103/167449348-bf254fca-9aec-4367-b166-aaa69178f98c.png">
+    </td>
+  </tr>
+</table>
+
+<br>
+
 ## <a name="contributing"></a>Contributing
 
 We love our contributors! Please read our [Contributing Document](CONTRIBUTING.md) to learn how you can start working on the Framework yourself.
@@ -173,33 +170,12 @@ Check out our [help wanted](https://github.com/serverless/serverless/labels/help
 
 ## <a name="community"></a>Community
 
-- [Email Updates](http://eepurl.com/b8dv4P)
-- [Serverless Forum](http://forum.serverless.com)
-- [Gitter Chatroom](https://gitter.im/serverless/serverless)
+- [Twitter](https://twitter.com/goserverless)
+- [Community Slack](https://serverless.com/slack)
 - [Serverless Meetups](http://www.meetup.com/serverless/)
 - [Stackoverflow](http://stackoverflow.com/questions/tagged/serverless-framework)
 - [Facebook](https://www.facebook.com/serverless)
-- [Twitter](https://twitter.com/goserverless)
 - [Contact Us](mailto:hello@serverless.com)
-
-## <a name="consultants"></a>Consultants
-
-We recommend the following professional services organizations who are experts in serverless development:
-
-- [Serverless Guru](https://serverlessguru.com/)
-- [Antstack](https://www.antstack.io/)
-- [Theodo](https://www.theodo.co.uk) - full stack teams passionate about Serverless that also run the Serverless Transformation Newsletter & Blog.
-- [null](https://null.tc/) - maintains [Bref](https://bref.sh/) to create serverless PHP applications
-- [Nordcloud](https://nordcloud.com) - they created [several plugins](https://github.com/nordcloud?utf8=%E2%9C%93&q=serverless&type=&language=), sponsor [Serverless Days Helsinki](https://helsinki.serverlessdays.io/) and regularly host [Serverless Finland](https://www.meetup.com/Serverless-Finland/) Meetups.
-- [API talent](http://www.apitalent.co.nz) - who also run [Serverless-Auckland Meetup](http://www.meetup.com/Serverless-Auckland)
-- [EPX Labs](http://www.epxlabs.com/) - runs [Serverless NYC Meetup](https://www.meetup.com/Serverless-NYC/)
-- [Seraro](http://www.seraro.com/) - Who also runs Atlanta Serverless Meetup (https://www.meetup.com/Atlanta-CABI-Camp-Cloud-AI-Blockchain-IOT) and Delhi Serverless Meetup (https://www.meetup.com/Delhi-NCR-Serverless-Architecture-Meetup/)
-- [superluminar](https://superluminar.io) - runs serverlessdays Hamburg and Serverless Meetup Hamburg
-- [JetBridge](https://jetbridge.com) - cloud-native and serverless application development services.
-
-If you'd like to be featured here, [please contact us](mailto:hello@serverless.com).
-
----
 
 ## <a name="licensing"></a>Licensing
 
@@ -208,7 +184,5 @@ Serverless is licensed under the [MIT License](./LICENSE.txt).
 All files located in the node_modules and external directories are externally maintained libraries used by this software which have their own licenses; we recommend you read them, as their terms may differ from the terms in the MIT License.
 
 # <a name="v.5"></a>Previous Serverless Version 0.5.x
-
-You can find projects and plugins relating to version 0.5 [here](./0.5.x-RESOURCES.md). Note that these are not compatible with v1.0 but we are working diligently on updating them. [Guide on building v1.0 plugins](./docs/providers/aws/guide/plugins.md).
 
 You can read the v0.5.x documentation at [readme.io](https://serverless.readme.io/v0.5.0/docs).

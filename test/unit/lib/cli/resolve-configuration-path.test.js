@@ -6,7 +6,7 @@ chai.use(require('chai-as-promised'));
 const { expect } = chai;
 
 const path = require('path');
-const fs = require('fs').promises;
+const fsp = require('fs').promises;
 const fse = require('fs-extra');
 const overrideArgv = require('process-utils/override-argv');
 const overrideEnv = require('process-utils/override-env');
@@ -19,7 +19,7 @@ describe('test/unit/lib/cli/resolve-configuration-path.test.js', () => {
   afterEach(async () => {
     if (!configurationPath) return;
     try {
-      await fs.unlink(configurationPath);
+      await fsp.unlink(configurationPath);
     } catch {
       // Ignore any error
     }
@@ -86,19 +86,18 @@ describe('test/unit/lib/cli/resolve-configuration-path.test.js', () => {
         process.env.SLS_DEPRECATION_NOTIFICATION_MODE = 'warn';
         const uncached = requireUncached(() => ({
           resolveServerlessConfigPath: require('../../../../lib/cli/resolve-configuration-path'),
-          triggeredDeprecations: require('../../../../lib/utils/logDeprecation')
-            .triggeredDeprecations,
         }));
         await overrideArgv(
           {
             args: ['serverless', '--config', 'nested/custom.yml'],
           },
           async () => {
-            expect(await uncached.resolveServerlessConfigPath()).to.equal(
-              path.resolve('nested/custom.yml')
+            await expect(
+              uncached.resolveServerlessConfigPath()
+            ).to.eventually.be.rejected.and.have.property(
+              'code',
+              'NESTED_CUSTOM_CONFIGURATION_PATH'
             );
-            expect(uncached.triggeredDeprecations.has('NESTED_CUSTOM_CONFIGURATION_PATH')).to.be
-              .true;
           }
         );
       });

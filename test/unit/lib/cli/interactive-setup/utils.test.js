@@ -21,7 +21,7 @@ describe('test/unit/lib/cli/interactive-setup/utils.test.js', () => {
       const { doesServiceInstanceHaveLinkedProvider } = proxyquire(
         '../../../../../lib/cli/interactive-setup/utils',
         {
-          '@serverless/dashboard-plugin/lib/resolveProviderCredentials': () => {
+          '@serverless/dashboard-plugin/lib/resolve-provider-credentials': () => {
             return {
               accessKeyId: 'someaccess',
               secretAccessKey: 'somesecret',
@@ -37,7 +37,7 @@ describe('test/unit/lib/cli/interactive-setup/utils.test.js', () => {
       const { doesServiceInstanceHaveLinkedProvider } = proxyquire(
         '../../../../../lib/cli/interactive-setup/utils',
         {
-          '@serverless/dashboard-plugin/lib/resolveProviderCredentials': () => {
+          '@serverless/dashboard-plugin/lib/resolve-provider-credentials': () => {
             return null;
           },
         }
@@ -49,7 +49,7 @@ describe('test/unit/lib/cli/interactive-setup/utils.test.js', () => {
       const { doesServiceInstanceHaveLinkedProvider } = proxyquire(
         '../../../../../lib/cli/interactive-setup/utils',
         {
-          '@serverless/dashboard-plugin/lib/resolveProviderCredentials': () => {
+          '@serverless/dashboard-plugin/lib/resolve-provider-credentials': () => {
             const err = new Error('Error');
             err.statusCode = 500;
             throw err;
@@ -59,6 +59,48 @@ describe('test/unit/lib/cli/interactive-setup/utils.test.js', () => {
       expect(
         doesServiceInstanceHaveLinkedProvider({ configuration, options })
       ).to.eventually.be.rejected.and.have.property('code', 'DASHBOARD_UNAVAILABLE');
+    });
+  });
+
+  describe('resolveInitialContext', () => {
+    it('correctly resolves for service context and dashboard enabled', async () => {
+      const configuration = {
+        app: 'someapp',
+        service: 'someservice',
+        org: 'someorg',
+      };
+      const serviceDir = '/path/to/service/dir';
+      const { resolveInitialContext } = proxyquire(
+        '../../../../../lib/cli/interactive-setup/utils',
+        {
+          '@serverless/dashboard-plugin/lib/is-authenticated': () => true,
+          '../../aws/has-local-credentials': () => true,
+        }
+      );
+      expect(resolveInitialContext({ configuration, serviceDir })).to.deep.equal({
+        hasLocalAwsCredentials: true,
+        isLoggedIntoDashboard: true,
+        isDashboardEnabled: true,
+        isInServiceContext: true,
+      });
+    });
+
+    it('correctly resolves without service context', async () => {
+      const configuration = null;
+      const serviceDir = null;
+      const { resolveInitialContext } = proxyquire(
+        '../../../../../lib/cli/interactive-setup/utils',
+        {
+          '@serverless/dashboard-plugin/lib/is-authenticated': () => true,
+          '../../aws/has-local-credentials': () => true,
+        }
+      );
+      expect(resolveInitialContext({ configuration, serviceDir })).to.deep.equal({
+        hasLocalAwsCredentials: true,
+        isLoggedIntoDashboard: true,
+        isDashboardEnabled: false,
+        isInServiceContext: false,
+      });
     });
   });
 });

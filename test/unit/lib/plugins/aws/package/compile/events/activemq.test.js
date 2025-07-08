@@ -14,6 +14,7 @@ describe('test/unit/lib/plugins/aws/package/compile/events/activemq.test.js', ()
   const enabled = false;
   const batchSize = 5000;
   const maximumBatchingWindow = 20;
+  const filterPatterns = [{ value: { a: [1, 2] } }, { value: [3] }];
 
   describe('when there are activemq events defined', () => {
     let minimalEventSourceMappingResource;
@@ -47,6 +48,7 @@ describe('test/unit/lib/plugins/aws/package/compile/events/activemq.test.js', ()
                     batchSize,
                     maximumBatchingWindow,
                     enabled,
+                    filterPatterns,
                   },
                 },
               ],
@@ -96,8 +98,8 @@ describe('test/unit/lib/plugins/aws/package/compile/events/activemq.test.js', ()
     });
 
     it('should correctly compile EventSourceMapping resource DependsOn ', () => {
-      expect(minimalEventSourceMappingResource.DependsOn).to.equal('IamRoleLambdaExecution');
-      expect(allParamsEventSourceMappingResource.DependsOn).to.equal('IamRoleLambdaExecution');
+      expect(minimalEventSourceMappingResource.DependsOn).to.include('IamRoleLambdaExecution');
+      expect(allParamsEventSourceMappingResource.DependsOn).to.include('IamRoleLambdaExecution');
     });
 
     it('should correctly compile EventSourceMapping resource with all parameters', () => {
@@ -115,6 +117,20 @@ describe('test/unit/lib/plugins/aws/package/compile/events/activemq.test.js', ()
         Queues: [queue],
         FunctionName: {
           'Fn::GetAtt': [naming.getLambdaLogicalId('other'), 'Arn'],
+        },
+        FilterCriteria: {
+          Filters: [
+            {
+              Pattern: JSON.stringify({
+                value: { a: [1, 2] },
+              }),
+            },
+            {
+              Pattern: JSON.stringify({
+                value: [3],
+              }),
+            },
+          ],
         },
       });
     });

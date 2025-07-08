@@ -17,6 +17,11 @@ const ConfigSchemaHandler = require('../../../lib/classes/config-schema-handler'
 const CLI = require('../../../lib/classes/cli');
 const ServerlessError = require('../../../lib/serverless-error');
 const runServerless = require('../../utils/run-serverless');
+const spawn = require('child-process-ext/spawn');
+const programmaticFixturesEngine = require('../../fixtures/programmatic');
+const path = require('path');
+const yaml = require('js-yaml');
+const _ = require('lodash');
 
 describe('Serverless', () => {
   let serverless;
@@ -92,17 +97,17 @@ describe('Serverless', () => {
   });
 
   describe('#init()', () => {
-    it('should set an instanceId', () =>
+    it('should set an instanceId', async () =>
       serverless.init().then(() => {
         expect(serverless.instanceId).to.match(/\d/);
       }));
 
-    it('should create a new CLI instance', () =>
+    it('should create a new CLI instance', async () =>
       serverless.init().then(() => {
         expect(serverless.cli).to.be.instanceof(CLI);
       }));
 
-    it('should allow a custom CLI instance', () => {
+    it('should allow a custom CLI instance', async () => {
       class CustomCLI extends CLI {}
       serverless.classes.CLI = CustomCLI;
 
@@ -114,7 +119,7 @@ describe('Serverless', () => {
 
     // note: we just test that the processedInput variable is set (not the content of it)
     // the test for the correct input is done in the CLI class test file
-    it('should receive the processed input form the CLI instance', () =>
+    it('should receive the processed input form the CLI instance', async () =>
       serverless.init().then(() => {
         expect(serverless.processedInput).to.not.deep.equal({});
       }));
@@ -172,6 +177,45 @@ describe('test/unit/lib/serverless.test.js', () => {
 
     it('Ensure config.servicePath', async () => {
       expect(serverless.config).to.have.property('servicePath');
+    });
+  });
+
+  describe('Extend configuration', () => {
+    const pluginConfig =
+      require('../../fixtures/programmatic/plugin/extend-config-plugin').pluginConfig;
+
+    const serverlessPath = path.resolve(__dirname, '../../../scripts/serverless.js');
+
+    it('Extends configuration with given values', async () => {
+      const customExt = { custom: {} };
+      const configExt = {
+        plugins: ['./extend-config-plugin/index.js'],
+        provider: {
+          stage: 'dev',
+        },
+        custom: {},
+      };
+      _.set(customExt, pluginConfig.overwriteValuePath, 'test_value');
+
+      const { servicePath: serviceDir } = await programmaticFixturesEngine.setup('plugin', {
+        configExt,
+      });
+      const serverlessProcess = await spawn('node', [serverlessPath, 'print'], {
+        cwd: serviceDir,
+      });
+      const configuration = yaml.load(String(serverlessProcess.stdoutBuffer));
+
+      const targetValue = _.get(configuration, pluginConfig.targetValuePath);
+      expect(targetValue, 'Target value should not be undefined').to.not.be.undefined;
+
+      const afterInitValue = _.get(configuration, pluginConfig.afterInitValuePath);
+      expect(afterInitValue, 'afterInitValue should be undefined').to.be.undefined;
+
+      const refValue = _.get(configuration, pluginConfig.refValuePath);
+      expect(refValue).to.deep.equal(targetValue, 'refValue should equal targetValue');
+
+      const overwriteValue = _.get(configuration, pluginConfig.overwriteValuePath);
+      expect(overwriteValue).to.deep.equal(targetValue, 'overwriteValue should equal targetValue');
     });
   });
 });

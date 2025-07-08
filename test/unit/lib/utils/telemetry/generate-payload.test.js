@@ -21,7 +21,7 @@ const getGeneratePayload = () =>
     '@serverless/utils/get-notifications-mode': () => 'on',
   });
 
-describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
+describe('test/unit/lib/utils/telemetry/generate-payload.test.js', () => {
   let isTTYCache;
   let originalModulesCache;
   before(() => {
@@ -127,8 +127,6 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
     delete payload.timestamp;
     expect(payload).to.have.property('dashboard');
     delete payload.dashboard;
-    expect(payload).to.have.property('console');
-    delete payload.console;
     expect(payload).to.have.property('timezone');
     delete payload.timezone;
     expect(payload).to.have.property('ciName');
@@ -167,6 +165,8 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
       },
       isAutoUpdateEnabled: false,
       isUsingCompose: false,
+      isDockerInstalled: undefined,
+      dockerVersion: undefined,
       notificationsMode: 'on',
       npmDependencies: ['fooDep', 'barDep', 'fooOpt', 'someDev', 'otherDev'],
       triggeredDeprecations: [],
@@ -198,8 +198,6 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
     delete payload.timestamp;
     expect(payload).to.have.property('dashboard');
     delete payload.dashboard;
-    expect(payload).to.have.property('console');
-    delete payload.console;
     expect(payload).to.have.property('timezone');
     delete payload.timezone;
     expect(payload).to.have.property('ciName');
@@ -232,6 +230,8 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
       },
       isAutoUpdateEnabled: false,
       isUsingCompose: false,
+      isDockerInstalled: undefined,
+      dockerVersion: undefined,
       notificationsMode: 'on',
       npmDependencies: [],
       triggeredDeprecations: [],
@@ -258,8 +258,6 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
     delete payload.timestamp;
     expect(payload).to.have.property('dashboard');
     delete payload.dashboard;
-    expect(payload).to.have.property('console');
-    delete payload.console;
     expect(payload).to.have.property('timezone');
     delete payload.timezone;
     expect(payload).to.have.property('ciName');
@@ -274,6 +272,8 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
       commandOptionNames: [],
       isAutoUpdateEnabled: false,
       isUsingCompose: false,
+      isDockerInstalled: undefined,
+      dockerVersion: undefined,
       notificationsMode: 'on',
       triggeredDeprecations: [],
       installationType: 'global:other',
@@ -298,8 +298,6 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
     delete payload.timestamp;
     expect(payload).to.have.property('dashboard');
     delete payload.dashboard;
-    expect(payload).to.have.property('console');
-    delete payload.console;
     expect(payload).to.have.property('timezone');
     delete payload.timezone;
     expect(payload).to.have.property('ciName');
@@ -318,7 +316,7 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
         variableSources: [],
         provider: {
           name: 'aws',
-          runtime: 'nodejs12.x',
+          runtime: 'nodejs14.x',
           stage: 'dev',
           region: 'us-east-1',
         },
@@ -329,6 +327,8 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
       },
       isAutoUpdateEnabled: false,
       isUsingCompose: false,
+      isDockerInstalled: undefined,
+      dockerVersion: undefined,
       triggeredDeprecations: [],
       installationType: 'global:other',
       notificationsMode: 'on',
@@ -353,8 +353,6 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
     delete payload.timestamp;
     expect(payload).to.have.property('dashboard');
     delete payload.dashboard;
-    expect(payload).to.have.property('console');
-    delete payload.console;
     expect(payload).to.have.property('timezone');
     delete payload.timezone;
     expect(payload).to.have.property('ciName');
@@ -369,6 +367,8 @@ describe('test/unit/lib/utils/telemetry/generatePayload.test.js', () => {
       commandOptionNames: [],
       isAutoUpdateEnabled: false,
       isUsingCompose: false,
+      isDockerInstalled: undefined,
+      dockerVersion: undefined,
       notificationsMode: 'on',
       triggeredDeprecations: [],
       installationType: 'global:other',

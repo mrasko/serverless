@@ -4,6 +4,7 @@ const expect = require('chai').expect;
 const AwsCompileWebsocketsEvents = require('../../../../../../../../../../lib/plugins/aws/package/compile/events/websockets/index');
 const Serverless = require('../../../../../../../../../../lib/serverless');
 const AwsProvider = require('../../../../../../../../../../lib/plugins/aws/provider');
+const runServerless = require('../../../../../../../../../utils/run-serverless');
 
 describe('#compileAuthorizers()', () => {
   let awsCompileWebsocketsEvents;
@@ -13,7 +14,9 @@ describe('#compileAuthorizers()', () => {
       const serverless = new Serverless({ commands: [], options: {} });
       serverless.setProvider('aws', new AwsProvider(serverless));
       serverless.service.provider.compiledCloudFormationTemplate = { Resources: {} };
-
+      serverless.service.functions = {
+        auth: {},
+      };
       awsCompileWebsocketsEvents = new AwsCompileWebsocketsEvents(serverless);
 
       awsCompileWebsocketsEvents.websocketsApiLogicalId =
@@ -55,6 +58,7 @@ describe('#compileAuthorizers()', () => {
 
       expect(resources).to.deep.equal({
         AuthWebsocketsAuthorizer: {
+          DependsOn: undefined,
           Type: 'AWS::ApiGatewayV2::Authorizer',
           Properties: {
             ApiId: {
@@ -141,6 +145,24 @@ describe('#compileAuthorizers()', () => {
           .Resources;
 
       expect(resources).to.deep.equal({});
+    });
+  });
+
+  describe('external authorizer', () => {
+    it('should add a permission resource for the external authorizer function', async () => {
+      const { cfTemplate } = await runServerless({
+        fixture: 'websocket-external-auth',
+        command: 'package',
+      });
+      expect(cfTemplate.Resources.AuthLambdaPermissionWebsockets).to.deep.equal({
+        Type: 'AWS::Lambda::Permission',
+        DependsOn: ['WebsocketsApi'],
+        Properties: {
+          Action: 'lambda:InvokeFunction',
+          Principal: 'apigateway.amazonaws.com',
+          FunctionName: 'arn:aws:lambda:us-east-1:000000000000:function:auth',
+        },
+      });
     });
   });
 });

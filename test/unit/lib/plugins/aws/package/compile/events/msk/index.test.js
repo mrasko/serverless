@@ -11,7 +11,8 @@ describe('AwsCompileMSKEvents', () => {
   const arn = 'arn:aws:kafka:us-east-1:111111111111:cluster/ClusterName/a1a1a1a1a1a1a1a1a';
   const topic = 'TestingTopic';
   const enabled = false;
-  const startingPosition = 'LATEST';
+  const startingPosition = 'AT_TIMESTAMP';
+  const startingPositionTimestamp = 123;
   const batchSize = 5000;
   const maximumBatchingWindow = 10;
   const saslScram512 =
@@ -23,6 +24,7 @@ describe('AwsCompileMSKEvents', () => {
       URI: saslScram512,
     },
   ];
+  const filterPatterns = [{ value: { a: [1, 2] } }, { value: [3] }];
 
   describe('when there are msk events defined', () => {
     let minimalEventSourceMappingResource;
@@ -55,8 +57,10 @@ describe('AwsCompileMSKEvents', () => {
                     maximumBatchingWindow,
                     enabled,
                     startingPosition,
+                    startingPositionTimestamp,
                     saslScram512,
                     consumerGroupId,
+                    filterPatterns,
                   },
                 },
               ],
@@ -108,8 +112,8 @@ describe('AwsCompileMSKEvents', () => {
     });
 
     it('should correctly compile EventSourceMapping resource DependsOn ', () => {
-      expect(minimalEventSourceMappingResource.DependsOn).to.equal('IamRoleLambdaExecution');
-      expect(allParamsEventSourceMappingResource.DependsOn).to.equal('IamRoleLambdaExecution');
+      expect(minimalEventSourceMappingResource.DependsOn).to.include('IamRoleLambdaExecution');
+      expect(allParamsEventSourceMappingResource.DependsOn).to.include('IamRoleLambdaExecution');
     });
 
     it('should correctly complie EventSourceMapping resource with all parameters', () => {
@@ -119,6 +123,7 @@ describe('AwsCompileMSKEvents', () => {
         Enabled: enabled,
         EventSourceArn: arn,
         StartingPosition: startingPosition,
+        StartingPositionTimestamp: startingPositionTimestamp,
         SourceAccessConfigurations: sourceAccessConfigurations,
         Topics: [topic],
         FunctionName: {
@@ -127,6 +132,54 @@ describe('AwsCompileMSKEvents', () => {
         AmazonManagedKafkaEventSourceConfig: {
           ConsumerGroupId: consumerGroupId,
         },
+        FilterCriteria: {
+          Filters: [
+            {
+              Pattern: JSON.stringify({
+                value: { a: [1, 2] },
+              }),
+            },
+            {
+              Pattern: JSON.stringify({
+                value: [3],
+              }),
+            },
+          ],
+        },
+      });
+    });
+
+    describe('when startingPosition is AT_TIMESTAMP', () => {
+      it('if startingPositionTimestamp is not provided, it should fail to compile EventSourceMapping resource properties', async () => {
+        await expect(
+          runServerless({
+            fixture: 'function',
+            configExt: {
+              functions: {
+                other: {
+                  events: [
+                    {
+                      msk: {
+                        topic,
+                        arn,
+                        batchSize,
+                        maximumBatchingWindow,
+                        enabled,
+                        startingPosition,
+                        saslScram512,
+                        consumerGroupId,
+                        filterPatterns,
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+            command: 'package',
+          })
+        ).to.be.rejected.and.eventually.contain({
+          code: 'FUNCTION_MSK_STARTING_POSITION_TIMESTAMP_INVALID',
+        });
       });
     });
   });

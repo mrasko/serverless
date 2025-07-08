@@ -20,7 +20,16 @@ const ServerlessSDKMock = class ServerlessSDK {
       get: async () => {
         return {
           awsAccountId: '377024778620',
-          supportedRuntimes: ['nodejs10.x', 'nodejs12.x', 'python2.7', 'python3.6', 'python3.7'],
+          supportedRuntimes: [
+            'nodejs14.x',
+            'nodejs16.x',
+            'nodejs18.x',
+            'python3.7',
+            'python3.8',
+            'python3.9',
+            'python3.10',
+            'python3.11',
+          ],
           supportedRegions: [
             'us-east-1',
             'us-east-2',
@@ -53,14 +62,8 @@ describe('test/unit/lib/cli/interactive-setup/dashboard-login.test.js', function
     loginStub.resetHistory();
   });
 
-  it('Should be ineffective in console context', async () => {
-    const context = { isConsole: true, options: { console: true } };
-    expect(await step.isApplicable(context)).to.be.false;
-    expect(context.inapplicabilityReasonCode).to.equal('CONSOLE_CONTEXT');
-  });
-
   it('Should be ineffective, when not at service path', async () => {
-    const context = { options: {} };
+    const context = { options: {}, isDashboard: true };
     expect(await step.isApplicable(context)).to.be.false;
     expect(context.inapplicabilityReasonCode).to.equal('NOT_IN_SERVICE_DIRECTORY');
   });
@@ -72,6 +75,7 @@ describe('test/unit/lib/cli/interactive-setup/dashboard-login.test.js', function
       configurationFilename: 'serverless.yml',
       options: {},
       initial: {},
+      isDashboard: true,
       inquirer,
     };
     expect(await step.isApplicable(context)).to.equal(false);
@@ -85,6 +89,7 @@ describe('test/unit/lib/cli/interactive-setup/dashboard-login.test.js', function
       configurationFilename: 'serverless.yml',
       options: {},
       initial: {},
+      isDashboard: true,
       inquirer,
     };
     expect(await step.isApplicable(context)).to.equal(false);
@@ -101,6 +106,7 @@ describe('test/unit/lib/cli/interactive-setup/dashboard-login.test.js', function
       configurationFilename: 'serverless.yml',
       options: {},
       initial: {},
+      isDashboard: true,
       inquirer,
     };
     expect(await overrideCwd(serviceDir, async () => await step.isApplicable(context))).to.equal(
@@ -121,10 +127,11 @@ describe('test/unit/lib/cli/interactive-setup/dashboard-login.test.js', function
     });
     const context = {
       serviceDir: process.cwd(),
-      configuration: { provider: { name: 'aws', runtime: 'nodejs12.x' } },
+      configuration: { provider: { name: 'aws', runtime: 'nodejs16.x' } },
       configurationFilename: 'serverless.yml',
       options: {},
       initial: {},
+      isDashboard: true,
       inquirer,
       stepHistory: new StepHistory(),
     };
@@ -144,10 +151,11 @@ describe('test/unit/lib/cli/interactive-setup/dashboard-login.test.js', function
     });
     const context = {
       serviceDir: process.cwd(),
-      configuration: { provider: { name: 'aws', runtime: 'nodejs12.x' } },
+      configuration: { provider: { name: 'aws', runtime: 'nodejs16.x' } },
       configurationFilename: 'serverless.yml',
       options: { org: 'someorg' },
       initial: {},
+      isDashboard: true,
       inquirer,
       stepHistory: new StepHistory(),
     };
@@ -164,10 +172,11 @@ describe('test/unit/lib/cli/interactive-setup/dashboard-login.test.js', function
     });
     const context = {
       serviceDir: process.cwd(),
-      configuration: { org: 'someorg', provider: { name: 'aws', runtime: 'nodejs12.x' } },
+      configuration: { org: 'someorg', provider: { name: 'aws', runtime: 'nodejs16.x' } },
       configurationFilename: 'serverless.yml',
       options: {},
       initial: {},
+      isDashboard: true,
       inquirer,
       stepHistory: new StepHistory(),
     };
@@ -187,10 +196,11 @@ describe('test/unit/lib/cli/interactive-setup/dashboard-login.test.js', function
     });
     const context = {
       serviceDir: process.cwd(),
-      configuration: { provider: { name: 'aws', runtime: 'nodejs12.x' } },
+      configuration: { provider: { name: 'aws', runtime: 'nodejs16.x' } },
       configurationFilename: 'serverless.yml',
       options: {},
       initial: {},
+      isDashboard: true,
       inquirer,
       stepHistory: new StepHistory(),
     };

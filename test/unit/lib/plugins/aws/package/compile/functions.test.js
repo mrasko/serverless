@@ -3,7 +3,6 @@
 const AWS = require('aws-sdk');
 const fse = require('fs-extra');
 const fsp = require('fs').promises;
-const _ = require('lodash');
 const path = require('path');
 const chai = require('chai');
 const sinon = require('sinon');
@@ -96,7 +95,7 @@ describe('AwsCompileFunctions', () => {
       AWS.S3.restore();
     });
 
-    it('should download the file and replace the artifact path for function packages', () => {
+    it('should download the file and replace the artifact path for function packages', async () => {
       awsCompileFunctions.serverless.service.package.individually = true;
       awsCompileFunctions.serverless.service.functions[
         functionName
@@ -114,7 +113,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should download the file and replace the artifact path for service-wide packages', () => {
+    it('should download the file and replace the artifact path for service-wide packages', async () => {
       awsCompileFunctions.serverless.service.package.individually = false;
       awsCompileFunctions.serverless.service.functions[functionName].package.artifact = false;
       awsCompileFunctions.serverless.service.package.artifact = `https://s3.amazonaws.com/${s3BucketName}/${s3ArtifactName}`;
@@ -129,7 +128,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should not access AWS.S3 if URL is not an S3 URl', () => {
+    it('should not access AWS.S3 if URL is not an S3 URl', async () => {
       AWS.S3.restore();
       const myRequestStub = sinon.stub(AWS, 'S3').returns({
         getObject: () => {
@@ -145,7 +144,7 @@ describe('AwsCompileFunctions', () => {
   });
 
   describe('#compileFunctions()', () => {
-    it('should use function artifact if individually', () => {
+    it('should use function artifact if individually', async () => {
       awsCompileFunctions.serverless.service.package.individually = true;
 
       return expect(awsCompileFunctions.compileFunctions()).to.be.fulfilled.then(() => {
@@ -165,7 +164,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should add an ARN function role', () => {
+    it('should add an ARN function role', async () => {
       awsCompileFunctions.serverless.service.provider.name = 'aws';
       awsCompileFunctions.serverless.service.functions = {
         func: {
@@ -205,7 +204,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should add a logical role name function role', () => {
+    it('should add a logical role name function role', async () => {
       awsCompileFunctions.serverless.service.provider.name = 'aws';
       awsCompileFunctions.serverless.service.functions = {
         func: {
@@ -229,7 +228,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should add a "Fn::GetAtt" Object function role', () => {
+    it('should add a "Fn::GetAtt" Object function role', async () => {
       awsCompileFunctions.serverless.service.provider.name = 'aws';
       awsCompileFunctions.serverless.service.functions = {
         func: {
@@ -253,7 +252,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should add a "Fn::ImportValue" Object function role', () => {
+    it('should add a "Fn::ImportValue" Object function role', async () => {
       awsCompileFunctions.serverless.service.provider.name = 'aws';
       awsCompileFunctions.serverless.service.functions = {
         func: {
@@ -277,7 +276,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should add function declared roles', () => {
+    it('should add function declared roles', async () => {
       awsCompileFunctions.serverless.service.provider.name = 'aws';
       awsCompileFunctions.serverless.service.functions = {
         func0: {
@@ -313,7 +312,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should create a simple function resource', () => {
+    it('should create a simple function resource', async () => {
       const s3Folder = awsCompileFunctions.serverless.service.package.artifactDirectoryName;
       const s3FileName = awsCompileFunctions.serverless.service.package.artifact
         .split(path.sep)
@@ -336,7 +335,7 @@ describe('AwsCompileFunctions', () => {
           Handler: 'func.function.handler',
           MemorySize: 1024,
           Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-          Runtime: 'nodejs14.x',
+          Runtime: 'nodejs16.x',
           Timeout: 6,
         },
       };
@@ -375,7 +374,7 @@ describe('AwsCompileFunctions', () => {
             };
         });
 
-        it('should create necessary resources if a SNS arn is provided', () => {
+        it('should create necessary resources if a SNS arn is provided', async () => {
           awsCompileFunctions.serverless.service.functions = {
             func: {
               handler: 'func.function.handler',
@@ -396,7 +395,7 @@ describe('AwsCompileFunctions', () => {
               Handler: 'func.function.handler',
               MemorySize: 1024,
               Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-              Runtime: 'nodejs14.x',
+              Runtime: 'nodejs16.x',
               Timeout: 6,
               DeadLetterConfig: {
                 TargetArn: 'arn:aws:sns:region:accountid:foo',
@@ -424,7 +423,7 @@ describe('AwsCompileFunctions', () => {
           });
         });
 
-        it('should create necessary resources if a Ref is provided', () => {
+        it('should create necessary resources if a Ref is provided', async () => {
           awsCompileFunctions.serverless.service.functions = {
             func: {
               handler: 'func.function.handler',
@@ -447,7 +446,7 @@ describe('AwsCompileFunctions', () => {
               Handler: 'func.function.handler',
               MemorySize: 1024,
               Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-              Runtime: 'nodejs14.x',
+              Runtime: 'nodejs16.x',
               Timeout: 6,
               DeadLetterConfig: {
                 TargetArn: {
@@ -466,7 +465,7 @@ describe('AwsCompileFunctions', () => {
           });
         });
 
-        it('should create necessary resources if a Fn::ImportValue is provided', () => {
+        it('should create necessary resources if a Fn::ImportValue is provided', async () => {
           awsCompileFunctions.serverless.service.functions = {
             func: {
               handler: 'func.function.handler',
@@ -489,7 +488,7 @@ describe('AwsCompileFunctions', () => {
               Handler: 'func.function.handler',
               MemorySize: 1024,
               Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-              Runtime: 'nodejs14.x',
+              Runtime: 'nodejs16.x',
               Timeout: 6,
               DeadLetterConfig: {
                 TargetArn: {
@@ -508,7 +507,7 @@ describe('AwsCompileFunctions', () => {
           });
         });
 
-        it('should create necessary resources if a Fn::GetAtt is provided', () => {
+        it('should create necessary resources if a Fn::GetAtt is provided', async () => {
           awsCompileFunctions.serverless.service.functions = {
             func: {
               handler: 'func.function.handler',
@@ -531,7 +530,7 @@ describe('AwsCompileFunctions', () => {
               Handler: 'func.function.handler',
               MemorySize: 1024,
               Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-              Runtime: 'nodejs14.x',
+              Runtime: 'nodejs16.x',
               Timeout: 6,
               DeadLetterConfig: {
                 TargetArn: {
@@ -552,7 +551,7 @@ describe('AwsCompileFunctions', () => {
       });
 
       describe('when IamRoleLambdaExecution is not used', () => {
-        it('should create necessary function resources if a SNS arn is provided', () => {
+        it('should create necessary function resources if a SNS arn is provided', async () => {
           awsCompileFunctions.serverless.service.functions = {
             func: {
               handler: 'func.function.handler',
@@ -573,7 +572,7 @@ describe('AwsCompileFunctions', () => {
               Handler: 'func.function.handler',
               MemorySize: 1024,
               Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-              Runtime: 'nodejs14.x',
+              Runtime: 'nodejs16.x',
               Timeout: 6,
               DeadLetterConfig: {
                 TargetArn: 'arn:aws:sns:region:accountid:foo',
@@ -619,7 +618,7 @@ describe('AwsCompileFunctions', () => {
             };
         });
 
-        it('should create necessary resources if a tracing config is provided', () => {
+        it('should create necessary resources if a tracing config is provided', async () => {
           awsCompileFunctions.serverless.service.functions = {
             func: {
               handler: 'func.function.handler',
@@ -640,7 +639,7 @@ describe('AwsCompileFunctions', () => {
               Handler: 'func.function.handler',
               MemorySize: 1024,
               Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-              Runtime: 'nodejs14.x',
+              Runtime: 'nodejs16.x',
               Timeout: 6,
               TracingConfig: {
                 Mode: 'Active',
@@ -670,7 +669,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should create a function resource with function level environment config', () => {
+    it('should create a function resource with function level environment config', async () => {
       const s3Folder = awsCompileFunctions.serverless.service.package.artifactDirectoryName;
       const s3FileName = awsCompileFunctions.serverless.service.package.artifact
         .split(path.sep)
@@ -697,7 +696,7 @@ describe('AwsCompileFunctions', () => {
           Handler: 'func.function.handler',
           MemorySize: 1024,
           Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-          Runtime: 'nodejs14.x',
+          Runtime: 'nodejs16.x',
           Timeout: 6,
           Environment: {
             Variables: {
@@ -715,7 +714,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should accept an environment variable with CF ref and functions', () => {
+    it('should accept an environment variable with CF ref and functions', async () => {
       awsCompileFunctions.serverless.service.functions = {
         func: {
           handler: 'func.function.handler',
@@ -739,7 +738,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should consider function based config when creating a function resource', () => {
+    it('should consider function based config when creating a function resource', async () => {
       const s3Folder = awsCompileFunctions.serverless.service.package.artifactDirectoryName;
       const s3FileName = awsCompileFunctions.serverless.service.package.artifact
         .split(path.sep)
@@ -764,7 +763,7 @@ describe('AwsCompileFunctions', () => {
           Handler: 'func.function.handler',
           MemorySize: 128,
           Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-          Runtime: 'nodejs14.x',
+          Runtime: 'nodejs16.x',
           Timeout: 10,
         },
       };
@@ -777,7 +776,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should include description if specified', () => {
+    it('should include description if specified', async () => {
       awsCompileFunctions.serverless.service.functions = {
         func: {
           handler: 'func.function.handler',
@@ -793,7 +792,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should create corresponding function output and version objects', () => {
+    it('should create corresponding function output and version objects', async () => {
       awsCompileFunctions.serverless.service.functions = {
         func: {
           handler: 'func.function.handler',
@@ -815,7 +814,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should include description under version too if function is specified', () => {
+    it('should include description under version too if function is specified', async () => {
       const lambdaDescription = 'Lambda function description';
       awsCompileFunctions.serverless.service.functions = {
         func: {
@@ -826,7 +825,7 @@ describe('AwsCompileFunctions', () => {
 
       return expect(awsCompileFunctions.compileFunctions()).to.be.fulfilled.then(() => {
         let versionDescription;
-        for (const [key, value] of _.entries(
+        for (const [key, value] of Object.entries(
           awsCompileFunctions.serverless.service.provider.compiledCloudFormationTemplate.Resources
         )) {
           if (key.startsWith('FuncLambdaVersion')) {
@@ -838,7 +837,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should set function declared reserved concurrency limit', () => {
+    it('should set function declared reserved concurrency limit', async () => {
       const s3Folder = awsCompileFunctions.serverless.service.package.artifactDirectoryName;
       const s3FileName = awsCompileFunctions.serverless.service.package.artifact
         .split(path.sep)
@@ -863,7 +862,7 @@ describe('AwsCompileFunctions', () => {
           MemorySize: 1024,
           ReservedConcurrentExecutions: 5,
           Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-          Runtime: 'nodejs14.x',
+          Runtime: 'nodejs16.x',
           Timeout: 6,
         },
       };
@@ -876,7 +875,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should set function declared provisioned concurrency limit', () => {
+    it('should set function declared provisioned concurrency limit', async () => {
       awsCompileFunctions.serverless.service.functions = {
         func: {
           handler: 'func.function.handler',
@@ -894,7 +893,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should set function declared reserved concurrency limit even if it is zero', () => {
+    it('should set function declared reserved concurrency limit even if it is zero', async () => {
       const s3Folder = awsCompileFunctions.serverless.service.package.artifactDirectoryName;
       const s3FileName = awsCompileFunctions.serverless.service.package.artifact
         .split(path.sep)
@@ -919,7 +918,7 @@ describe('AwsCompileFunctions', () => {
           MemorySize: 1024,
           ReservedConcurrentExecutions: 0,
           Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-          Runtime: 'nodejs14.x',
+          Runtime: 'nodejs16.x',
           Timeout: 6,
         },
       };
@@ -931,10 +930,44 @@ describe('AwsCompileFunctions', () => {
         ).to.deep.equal(compiledFunction);
       });
     });
+
+    it('should set function SnapStart ApplyOn to PublishedVersions when enabled', async () => {
+      const { cfTemplate } = await runServerless({
+        fixture: 'function',
+        configExt: {
+          functions: {
+            basic: {
+              snapStart: true,
+            },
+          },
+        },
+        command: 'package',
+      });
+
+      expect(cfTemplate.Resources.BasicLambdaFunction.Properties.SnapStart).to.deep.equal({
+        ApplyOn: 'PublishedVersions',
+      });
+    });
+
+    it('should not configure function SnapStart ApplyOn when disabled', async () => {
+      const { cfTemplate } = await runServerless({
+        fixture: 'function',
+        configExt: {
+          functions: {
+            basic: {
+              snapStart: false,
+            },
+          },
+        },
+        command: 'package',
+      });
+
+      expect(cfTemplate.Resources.BasicLambdaFunction.Properties).to.not.have.property('SnapStart');
+    });
   });
 
   describe('#compileRole()', () => {
-    it('should not set unset properties when not specified in yml (layers, vpc, etc)', () => {
+    it('should not set unset properties when not specified in yml (layers, vpc, etc)', async () => {
       const s3Folder = awsCompileFunctions.serverless.service.package.artifactDirectoryName;
       const s3FileName = awsCompileFunctions.serverless.service.package.artifact
         .split(path.sep)
@@ -958,7 +991,7 @@ describe('AwsCompileFunctions', () => {
           Handler: 'func.function.handler',
           MemorySize: 1024,
           Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-          Runtime: 'nodejs14.x',
+          Runtime: 'nodejs16.x',
           Timeout: 6,
         },
       };
@@ -971,7 +1004,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should set Layers when specified', () => {
+    it('should set Layers when specified', async () => {
       const s3Folder = awsCompileFunctions.serverless.service.package.artifactDirectoryName;
       const s3FileName = awsCompileFunctions.serverless.service.package.artifact
         .split(path.sep)
@@ -996,7 +1029,7 @@ describe('AwsCompileFunctions', () => {
           Handler: 'func.function.handler',
           MemorySize: 1024,
           Role: { 'Fn::GetAtt': ['IamRoleLambdaExecution', 'Arn'] },
-          Runtime: 'nodejs14.x',
+          Runtime: 'nodejs16.x',
           Timeout: 6,
           Layers: ['arn:aws:xxx:*:*'],
         },
@@ -1010,7 +1043,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should set Condition when specified', () => {
+    it('should set Condition when specified', async () => {
       awsCompileFunctions.serverless.service.functions = {
         func: {
           handler: 'func.function.handler',
@@ -1027,7 +1060,7 @@ describe('AwsCompileFunctions', () => {
       });
     });
 
-    it('should include DependsOn when specified', () => {
+    it('should include DependsOn when specified', async () => {
       awsCompileFunctions.serverless.service.functions = {
         func: {
           handler: 'func.function.handler',
@@ -1083,7 +1116,11 @@ describe('lib/plugins/aws/package/compile/functions/index.test.js', () => {
               providerCfIfEnvVar: { 'Fn::If': ['cond', 'first', 'second'] },
             },
             memorySize: 4096,
-            runtime: 'nodejs14.x',
+            runtime: 'nodejs16.x',
+            runtimeManagement: {
+              mode: 'manual',
+              arn: 'arn:aws:lambda:us-east-1:111111111111::runtime:7b620fc2e66107a1046b140b9d320295811af3ad5d4c6a011fad1fa65127e9e6I',
+            },
             deploymentBucket: 'com.serverless.deploys',
             versionFunctions: false,
           },
@@ -1102,7 +1139,8 @@ describe('lib/plugins/aws/package/compile/functions/index.test.js', () => {
                 sharedEnvVar: 'valueFromFunction',
               },
               memorySize: 2048,
-              runtime: 'nodejs12.x',
+              runtime: 'nodejs16.x',
+              runtimeManagement: 'onFunctionUpdate',
               versionFunction: true,
             },
             fnFileSystemConfig: {
@@ -1297,6 +1335,22 @@ describe('lib/plugins/aws/package/compile/functions/index.test.js', () => {
       const { Runtime } = cfResources[naming.getLambdaLogicalId('foo')].Properties;
 
       expect(Runtime).to.equal(fooFunctionConfig.runtime);
+    });
+
+    it('should support `provider.runtimeManagement`', () => {
+      const providerConfig = serviceConfig.provider;
+
+      const { UpdateRuntimeOn } =
+        cfResources[naming.getLambdaLogicalId('other')].Properties.RuntimeManagementConfig;
+
+      expect(UpdateRuntimeOn.toLowerCase()).to.equal(providerConfig.runtimeManagement.mode);
+    });
+
+    it('should prefer `functions[].runtimeManagement` over `provider.runtimeManagement`', () => {
+      const { UpdateRuntimeOn } =
+        cfResources[naming.getLambdaLogicalId('foo')].Properties.RuntimeManagementConfig;
+
+      expect(UpdateRuntimeOn).to.equal('FunctionUpdate');
     });
 
     it('should support `provider.versionFunctions: false`', () => {
@@ -1659,13 +1713,14 @@ describe('lib/plugins/aws/package/compile/functions/index.test.js', () => {
               handler: 'target.handler',
               url: true,
             },
-            fnUrlWithAuthAndCors: {
+            fnUrlWithAuthCorsAndInvokeMode: {
               handler: 'target.handler',
               url: {
                 authorizer: 'aws_iam',
                 cors: {
                   maxAge: 3600,
                 },
+                invokeMode: 'RESPONSE_STREAM',
               },
             },
             fnUrlNullifyDefaultCorsValue: {
@@ -1688,7 +1743,7 @@ describe('lib/plugins/aws/package/compile/functions/index.test.js', () => {
               ExternalLambdaLayer: {
                 Type: 'AWS::Lambda::LayerVersion',
                 Properties: {
-                  CompatibleRuntimes: ['nodejs12.x'],
+                  CompatibleRuntimes: ['nodejs16.x'],
                   Content: {
                     S3Bucket: 'bucket',
                     S3Key: 'key',
@@ -1817,9 +1872,9 @@ describe('lib/plugins/aws/package/compile/functions/index.test.js', () => {
       // https://github.com/serverless/serverless/blob/d8527d8b57e7e5f0b94ba704d9f53adb34298d99/lib/plugins/aws/package/compile/functions/index.test.js#L1784-L1820
     });
 
-    it('should default to "nodejs14.x" runtime`', () => {
+    it('should default to "nodejs16.x" runtime`', () => {
       const funcResource = cfResources[naming.getLambdaLogicalId('target')];
-      expect(funcResource.Properties.Runtime).to.equal('nodejs14.x');
+      expect(funcResource.Properties.Runtime).to.equal('nodejs16.x');
     });
 
     it.skip('TODO: should support `functions[].runtime`', () => {
@@ -1941,13 +1996,14 @@ describe('lib/plugins/aws/package/compile/functions/index.test.js', () => {
       ).to.equal('FnUrlWithProvisionedProvConcLambdaAlias');
     });
 
-    it('should support `functions[].url` set to an object with authorizer and cors', () => {
+    it('should support `functions[].url` set to an object with values', () => {
       expect(
-        cfResources[naming.getLambdaFunctionUrlLogicalId('fnUrlWithAuthAndCors')].Properties
+        cfResources[naming.getLambdaFunctionUrlLogicalId('fnUrlWithAuthCorsAndInvokeMode')]
+          .Properties
       ).to.deep.equal({
         AuthType: 'AWS_IAM',
         TargetFunctionArn: {
-          'Fn::GetAtt': [naming.getLambdaLogicalId('fnUrlWithAuthAndCors'), 'Arn'],
+          'Fn::GetAtt': [naming.getLambdaLogicalId('fnUrlWithAuthCorsAndInvokeMode'), 'Arn'],
         },
         Cors: {
           AllowMethods: ['*'],
@@ -1964,12 +2020,13 @@ describe('lib/plugins/aws/package/compile/functions/index.test.js', () => {
           AllowCredentials: undefined,
           ExposeHeaders: undefined,
         },
+        InvokeMode: 'RESPONSE_STREAM',
       });
       expect(
-        cfOutputs[naming.getLambdaFunctionUrlLogicalId('fnUrlWithAuthAndCors')].Value
+        cfOutputs[naming.getLambdaFunctionUrlLogicalId('fnUrlWithAuthCorsAndInvokeMode')].Value
       ).to.deep.equal({
         'Fn::GetAtt': [
-          naming.getLambdaFunctionUrlOutputLogicalId('fnUrlWithAuthAndCors'),
+          naming.getLambdaFunctionUrlOutputLogicalId('fnUrlWithAuthCorsAndInvokeMode'),
           'FunctionUrl',
         ],
       });
@@ -2277,6 +2334,26 @@ describe('lib/plugins/aws/package/compile/functions/index.test.js', () => {
         command: 'package',
       }).catch((error) => {
         expect(error).to.have.property('code', 'LAMBDA_FILE_SYSTEM_CONFIG_MISSING_VPC');
+      });
+    });
+
+    it('should throw error when `SnapStart` and `ProvisionedConcurrency` is enabled on the function', () => {
+      return runServerless({
+        fixture: 'function',
+        configExt: {
+          functions: {
+            basic: {
+              snapStart: true,
+              provisionedConcurrency: 10,
+            },
+          },
+        },
+        command: 'package',
+      }).catch((error) => {
+        expect(error).to.have.property(
+          'code',
+          'FUNCTION_BOTH_PROVISIONED_CONCURRENCY_AND_SNAPSTART_ENABLED_ERROR'
+        );
       });
     });
   });

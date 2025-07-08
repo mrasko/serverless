@@ -117,6 +117,7 @@ Some function settings can be defined for all functions inside the `provider` ke
 
 provider:
   runtime: nodejs14.x
+  runtimeManagement: auto # optional, set how Lambda controls all functions runtime. AWS default is auto; this can either be 'auto' or 'onFunctionUpdate'. For 'manual', see example in hello function below (syntax for both is identical
   # Default memory size for functions (default: 1024MB)
   memorySize: 512
   # Default timeout for functions (default: 6 seconds)
@@ -125,9 +126,14 @@ provider:
   # Function environment variables
   environment:
     APP_ENV_VARIABLE: FOOBAR
-  # Duration for CloudWatch log retention (default: forever)
+  # Duration for CloudWatch log retention (default: forever).
+  # Can be overridden for each function separately inside the functions block, see below on page.
   # Valid values: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
   logRetentionInDays: 14
+  # Policy defining how to monitor and mask sensitive data in CloudWatch logs
+  # Policy format: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data-start.html
+  logDataProtectionPolicy:
+    Name: data-protection-policy
   # KMS key ARN to use for encryption for all functions
   kmsKeyArn: arn:aws:kms:us-east-1:XXXXXX:key/some-hash
   # Version of hashing algorithm used by Serverless Framework for function packaging
@@ -616,6 +622,9 @@ functions:
     # Can be the URI of an image in ECR, or the name of an image defined in 'provider.ecr.images'
     image: baseimage
     runtime: nodejs14.x
+    runtimeManagement:
+      mode: manual # syntax required for manual, mode property also supports 'auto' or 'onFunctionUpdate' (see provider.runtimeManagement)
+      arn: <aws runtime arn> # required when mode is manual
     # Memory size (default: 1024MB)
     memorySize: 512
     # Timeout (default: 6 seconds)
@@ -641,9 +650,11 @@ functions:
     onError: arn:aws:sns:us-east-1:XXXXXX:sns-topic
     # KMS key ARN to use for encryption for this function
     kmsKeyArn: arn:aws:kms:us-east-1:XXXXXX:key/some-hash
+    # Defines if you want to make use of SnapStart, this feature can only be used in combination with a Java runtime. Configuring this property will result in either None or PublishedVersions for the Lambda function
+    snapStart: true
     # Disable the creation of the CloudWatch log group
     disableLogs: false
-    # Duration for CloudWatch log retention (default: forever).
+    # Duration for CloudWatch log retention (default: forever). Overrides provider setting.
     logRetentionInDays: 14
     tags: # Function specific tags
       foo: bar
@@ -893,6 +904,7 @@ functions:
             pet:
               - dog
               - cat
+          filterPolicyScope: MessageAttributes
           redrivePolicy:
             # (1) ARN
             deadLetterTargetArn: arn:aws:sqs:us-east-1:11111111111:myDLQ
@@ -965,14 +977,20 @@ functions:
           batchSize: 100
           # Optional, must be in 0-300 range (seconds)
           maximumBatchingWindow: 30
-          # Optional, can be set to LATEST or TRIM_HORIZON
+          # Optional, can be set to LATEST, AT_TIMESTAMP or TRIM_HORIZON
           startingPosition: LATEST
+          # Mandatory when startingPosition is AT_TIMESTAMP, must be in Unix time seconds
+          startingPositionTimestamp: 10000123
           # (default: true)
           enabled: false
           # Optional, arn of the secret key for authenticating with the brokers in your MSK cluster.
           saslScram512: arn:aws:secretsmanager:region:XXXXXX:secret:AmazonMSK_xxxxxx
           # Optional, specifies the consumer group ID to be used when consuming from Kafka. If not provided, a random UUID will be generated
           consumerGroupId: MyConsumerGroupId
+          # Optional, specifies event pattern content filtering
+          filterPatterns:
+            - value:
+                a: [1, 2]
 ```
 
 ### ActiveMQ
@@ -999,6 +1017,10 @@ functions:
           startingPosition: LATEST
           # (default: true)
           enabled: false
+          # Optional, specifies event pattern content filtering
+          filterPatterns:
+            - value:
+                a: [1, 2]
 ```
 
 ### Kafka
@@ -1032,6 +1054,9 @@ functions:
           enabled: false
           # Optional, specifies the consumer group ID to be used when consuming from Kafka. If not provided, a random UUID will be generated
           consumerGroupId: MyConsumerGroupId
+          # Optional, specifies event pattern content filtering
+          filterPatterns:
+            - eventName: INSERT
 ```
 
 ### RabbitMQ
@@ -1060,6 +1085,10 @@ functions:
           startingPosition: LATEST
           # (default: true)
           enabled: false
+          # Optional, specifies event pattern content filtering
+          filterPatterns:
+            - value:
+                a: [1, 2]
 ```
 
 ### Alexa
@@ -1197,6 +1226,7 @@ functions:
     events:
       # Use the default AWS event bus
       - eventBridge:
+          description: a description of my eventBridge event's purpose
           schedule: rate(10 minutes)
       # Create a custom event bus
       - eventBridge:
@@ -1304,7 +1334,7 @@ layers:
     description: Description of what the lambda layer does
     # optional, a list of runtimes this layer is compatible with
     compatibleRuntimes:
-      - python3.8
+      - python3.11
     # optional, a list of architectures this layer is compatible with
     compatibleArchitectures:
       - x86_64

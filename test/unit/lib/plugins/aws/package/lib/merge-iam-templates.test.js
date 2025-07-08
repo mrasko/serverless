@@ -119,6 +119,7 @@ describe('lib/plugins/aws/package/lib/mergeIamTemplates.test.js', () => {
         expect(createLogStatement.Action).to.be.deep.equal([
           'logs:CreateLogStream',
           'logs:CreateLogGroup',
+          'logs:TagResource',
         ]);
         expect(createLogStatement.Resource).to.deep.includes({
           'Fn::Sub': `${arnLogPrefix}:log-group:/aws/lambda/${service}-dev*:*`,
@@ -141,6 +142,7 @@ describe('lib/plugins/aws/package/lib/mergeIamTemplates.test.js', () => {
         expect(createLogStatement.Action).to.be.deep.equal([
           'logs:CreateLogStream',
           'logs:CreateLogGroup',
+          'logs:TagResource',
         ]);
         expect(createLogStatement.Resource).to.deep.includes({
           'Fn::Sub': `${arnLogPrefix}:log-group:/aws/lambda/myCustomName:*`,
@@ -306,6 +308,11 @@ describe('lib/plugins/aws/package/lib/mergeIamTemplates.test.js', () => {
                 subnetIds: ['xxx'],
               },
               logRetentionInDays: 5,
+              logDataProtectionPolicy: {
+                Name: 'data-protection-policy',
+                Version: '2021-06-01',
+                Statement: [],
+              },
             },
           },
         });
@@ -429,6 +436,12 @@ describe('lib/plugins/aws/package/lib/mergeIamTemplates.test.js', () => {
         expect(iamResource.Properties.LogGroupName).to.be.equal(`/aws/lambda/${service}-dev-basic`);
       });
 
+      it('should support `provider.logDataProtectionPolicy`', () => {
+        const normalizedName = naming.getLogGroupLogicalId('basic');
+        const iamResource = cfResources[normalizedName];
+        expect(iamResource.Properties.DataProtectionPolicy.Name).to.equal('data-protection-policy');
+      });
+
       it('should support `provider.iam.role.tags`', () => {
         const IamRoleLambdaExecution = naming.getRoleLogicalId();
         const iamResource = cfResources[IamRoleLambdaExecution];
@@ -476,6 +489,14 @@ describe('lib/plugins/aws/package/lib/mergeIamTemplates.test.js', () => {
               fnLogRetentionInDays: {
                 handler: 'index.handler',
                 logRetentionInDays: 5,
+              },
+              fnLogDataProtectionPolicy: {
+                handler: 'index.handler',
+                logDataProtectionPolicy: {
+                  Name: 'data-protection-policy',
+                  Version: '2021-06-01',
+                  Statement: [],
+                },
               },
               fnWithVpc: {
                 handler: 'index.handler',
@@ -526,6 +547,18 @@ describe('lib/plugins/aws/package/lib/mergeIamTemplates.test.js', () => {
 
         expect(logResource.Type).to.be.equal('AWS::Logs::LogGroup');
         expect(logResource.Properties.RetentionInDays).to.be.equal(5);
+        expect(logResource.Properties.LogGroupName).to.be.equal(
+          naming.getLogGroupName(functionName)
+        );
+      });
+
+      it('should support `functions[].logDataProtectionPolicy`', async () => {
+        const functionName = serverless.service.getFunction('fnLogDataProtectionPolicy').name;
+        const normalizedName = naming.getLogGroupLogicalId('fnLogDataProtectionPolicy');
+        const logResource = cfResources[normalizedName];
+
+        expect(logResource.Type).to.be.equal('AWS::Logs::LogGroup');
+        expect(logResource.Properties.DataProtectionPolicy.Name).to.equal('data-protection-policy');
         expect(logResource.Properties.LogGroupName).to.be.equal(
           naming.getLogGroupName(functionName)
         );

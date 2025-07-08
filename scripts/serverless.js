@@ -22,7 +22,6 @@ const {
 const generateTelemetryPayload = require('../lib/utils/telemetry/generate-payload');
 const isTelemetryDisabled = require('../lib/utils/telemetry/are-disabled');
 const logDeprecation = require('../lib/utils/log-deprecation');
-const resolveConsoleAuthMode = require('@serverless/utils/auth/resolve-mode');
 
 let command;
 let isHelpRequest;
@@ -31,7 +30,7 @@ let commandSchema;
 let serviceDir = null;
 let configuration = null;
 let serverless;
-let isConsoleAuthenticated = false;
+let dockerVersion;
 const commandUsage = {};
 const variableSourcesInConfig = new Set();
 
@@ -61,12 +60,6 @@ const finalize = async ({ error, shouldBeSync, telemetryData, shouldSendTelemetr
   if (error) ({ telemetryData } = await handleError(error, { serverless }));
   if (!shouldBeSync) {
     await logDeprecation.printSummary();
-    await resolveConsoleAuthMode().then(
-      (mode) => {
-        isConsoleAuthenticated = Boolean(mode);
-      },
-      () => {}
-    );
   }
   if (isTelemetryDisabled || !commandSchema) return null;
   if (!error && isHelpRequest) return null;
@@ -80,7 +73,7 @@ const finalize = async ({ error, shouldBeSync, telemetryData, shouldSendTelemetr
       serverless,
       commandUsage,
       variableSources: variableSourcesInConfig,
-      isConsoleAuthenticated,
+      dockerVersion,
     }),
     ...telemetryData,
   });
@@ -106,12 +99,6 @@ processSpanPromise = (async () => {
     const wait = require('timers-ext/promise/sleep');
     await wait(); // Ensure access to "processSpanPromise"
 
-    resolveConsoleAuthMode().then(
-      (mode) => {
-        isConsoleAuthenticated = Boolean(mode);
-      },
-      () => {}
-    );
     require('signal-exit/signals').forEach((signal) => {
       process.once(signal, () => {
         processLog.debug('exit signal %s', signal);
@@ -135,11 +122,18 @@ processSpanPromise = (async () => {
 
     (() => {
       // Rewrite eventual `sls deploy -f` into `sls deploy function -f`
+      // Also rewrite `serverless dev` to `serverless --dev``
       const isParamName = RegExp.prototype.test.bind(require('../lib/cli/param-reg-exp'));
 
       const args = process.argv.slice(2);
       const firstParamIndex = args.findIndex(isParamName);
       const commands = args.slice(0, firstParamIndex === -1 ? Infinity : firstParamIndex);
+
+      if (commands.join('') === 'dev') {
+        process.argv[2] = '--dev';
+        return;
+      }
+
       if (commands.join(' ') !== 'deploy') return;
       if (!args.includes('-f') && !args.includes('--function')) return;
       logDeprecation(
@@ -319,6 +313,7 @@ processSpanPromise = (async () => {
               propertyPathsToResolve: new Set(['provider\0name', 'provider\0stage', 'useDotenv']),
               variableSourcesInConfig,
             };
+
             if (isInteractiveSetup) resolverConfiguration.fulfilledSources.add('opt');
             await resolveVariables(resolverConfiguration);
 
@@ -594,10 +589,9 @@ processSpanPromise = (async () => {
       configuration,
       serviceDir,
       configurationFilename,
-      isConfigurationResolved:
-        commands[0] === 'plugin' || Boolean(variablesMeta && !variablesMeta.size),
       commands,
       options,
+      variablesMeta,
     });
 
     try {
@@ -644,6 +638,31 @@ processSpanPromise = (async () => {
         if (hasFinalCommandSchema) require('../lib/cli/ensure-supported-command')(configuration);
         if (isHelpRequest) return;
         if (!_.get(variablesMeta, 'size')) return;
+        if (!resolverConfiguration) {
+          // There were no variables in the initial configuration, yet it was extended by
+          // the plugins with ones.
+          // In this case we need to ensure `resolverConfiguration` which initially was not setup
+          resolverConfiguration = {
+            serviceDir,
+            configuration,
+            variablesMeta,
+            sources: {
+              env: require('../lib/configuration/variables/sources/env'),
+              file: require('../lib/configuration/variables/sources/file'),
+              opt: require('../lib/configuration/variables/sources/opt'),
+              self: require('../lib/configuration/variables/sources/self'),
+              strToBool: require('../lib/configuration/variables/sources/str-to-bool'),
+              sls: require('../lib/configuration/variables/sources/instance-dependent/get-sls')(),
+            },
+            options: filterSupportedOptions(options, { commandSchema, providerName }),
+            fulfilledSources: new Set(['env', 'file', 'self', 'strToBool']),
+            propertyPathsToResolve:
+              commands[0] === 'plugin'
+                ? new Set(['plugins', 'provider\0name', 'provider\0stage', 'useDotenv'])
+                : null,
+            variableSourcesInConfig,
+          };
+        }
 
         if (commandSchema) {
           resolverConfiguration.options = filterSupportedOptions(options, {
@@ -782,6 +801,19 @@ processSpanPromise = (async () => {
           serverless = interactiveContext.serverless;
         }
       } else {
+        if (commands.join(' ') === 'deploy') {
+          const spawn = require('child-process-ext/spawn');
+          spawn('docker', ['--version']).then(
+            ({ stdoutBuffer }) => {
+              dockerVersion = null;
+              const matcher = String(stdoutBuffer).match(/(?<version>\d+\.\d+\.\d+),/);
+              if (!matcher) return;
+              dockerVersion = matcher.groups.version;
+            },
+            () => (dockerVersion = null)
+          );
+        }
+
         processLog.debug('run Serverless instance');
         // Run command
         await serverless.run();

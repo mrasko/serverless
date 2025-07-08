@@ -1,12 +1,8 @@
 'use strict';
 
-const BbPromise = require('bluebird');
-const chai = require('chai');
+const { expect } = require('chai');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire').noCallThru();
-const { expect } = require('chai');
-
-chai.use(require('chai-as-promised'));
 
 describe('ensureApiGatewayCloudWatchRole', () => {
   let provider;
@@ -45,32 +41,30 @@ describe('ensureApiGatewayCloudWatchRole', () => {
   });
 
   describe('when using a custom REST API role', () => {
-    it('should add the custom REST API role to the resources', () => {
+    it('should add the custom REST API role to the resources', async () => {
       provider.serverless.service.provider.logs = {
         restApi: {
           role: 'arn:aws:iam::XXXXX:role/api-gateway-role',
         },
       };
 
-      return expect(ensureApiGatewayCloudWatchRole(provider)).to.eventually.be.fulfilled.then(
-        () => {
-          expect(resources[customResourceLogicalId]).to.deep.equal({
-            Type: 'Custom::ApiGatewayAccountRole',
-            Version: 1,
-            Properties: {
-              ServiceToken: {
-                'Fn::GetAtt': ['bar', 'Arn'],
-              },
-              RoleArn: 'arn:aws:iam::XXXXX:role/api-gateway-role',
-            },
-          });
-        }
-      );
+      await ensureApiGatewayCloudWatchRole(provider);
+
+      expect(resources[customResourceLogicalId]).to.deep.equal({
+        Type: 'Custom::ApiGatewayAccountRole',
+        Version: 1,
+        Properties: {
+          ServiceToken: {
+            'Fn::GetAtt': ['bar', 'Arn'],
+          },
+          RoleArn: 'arn:aws:iam::XXXXX:role/api-gateway-role',
+        },
+      });
     });
   });
 
   describe('when role assignment is managed externally', () => {
-    it('should not add any custom resources', () => {
+    it('should not add any custom resources', async () => {
       provider.serverless.service.provider.logs = {
         restApi: {
           role: 'arn:aws:iam::XXXXX:role/api-gateway-role',
@@ -78,41 +72,35 @@ describe('ensureApiGatewayCloudWatchRole', () => {
         },
       };
 
-      return expect(ensureApiGatewayCloudWatchRole(provider)).to.eventually.be.fulfilled.then(
-        () => {
-          expect(resources[customResourceLogicalId]).to.be.undefined;
-        }
-      );
+      await ensureApiGatewayCloudWatchRole(provider);
+
+      expect(resources[customResourceLogicalId]).to.be.undefined;
     });
   });
 
   describe('when leveraging custom resources', () => {
-    it('Should memoize custom resource generator', () => {
-      return expect(
-        BbPromise.all([
-          ensureApiGatewayCloudWatchRole(provider),
-          ensureApiGatewayCloudWatchRole(provider),
-        ])
-      ).to.eventually.be.fulfilled.then(() => {
-        expect(addCustomResourceToServiceStub.calledOnce).to.equal(true);
-      });
+    it('Should memoize custom resource generator', async () => {
+      await Promise.all([
+        ensureApiGatewayCloudWatchRole(provider),
+        ensureApiGatewayCloudWatchRole(provider),
+      ]);
+
+      expect(addCustomResourceToServiceStub.calledOnce).to.be.true;
     });
 
-    it('Should ensure custom resource on template', () => {
-      return expect(ensureApiGatewayCloudWatchRole(provider)).to.eventually.be.fulfilled.then(
-        () => {
-          expect(resources[customResourceLogicalId]).to.deep.equal({
-            Type: 'Custom::ApiGatewayAccountRole',
-            Version: 1,
-            Properties: {
-              RoleArn: undefined,
-              ServiceToken: {
-                'Fn::GetAtt': ['bar', 'Arn'],
-              },
-            },
-          });
-        }
-      );
+    it('Should ensure custom resource on template', async () => {
+      await ensureApiGatewayCloudWatchRole(provider);
+
+      expect(resources[customResourceLogicalId]).to.deep.equal({
+        Type: 'Custom::ApiGatewayAccountRole',
+        Version: 1,
+        Properties: {
+          RoleArn: undefined,
+          ServiceToken: {
+            'Fn::GetAtt': ['bar', 'Arn'],
+          },
+        },
+      });
     });
   });
 });

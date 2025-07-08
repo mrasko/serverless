@@ -19,6 +19,7 @@ const serverlessConfigurationExtension = {
       events: [
         {
           eventBridge: {
+            description: 'My Event Rule description',
             eventBus: 'arn:aws:events:us-east-1:12345:event-bus/default',
             schedule: 'rate(10 minutes)',
           },
@@ -151,6 +152,26 @@ const serverlessConfigurationExtension = {
         },
       ],
     },
+    orPattern: {
+      handler: 'index.handler',
+      events: [
+        {
+          eventBridge: {
+            eventBus: 'arn:aws:events:us-east-1:12345:event-bus/default',
+            pattern: {
+              $or: [
+                {
+                  detail: {
+                    eventSource: ['saas.external'],
+                  },
+                },
+                { source: ['aws.cloudformation'] },
+              ],
+            },
+          },
+        },
+      ],
+    },
   },
 };
 
@@ -270,6 +291,16 @@ describe('EventBridgeEvents', () => {
       } = eventBridgeConfig.InputTransformer;
       expect(InputTemplate).be.eq('{"time": <eventTime>, "key1": "value1"}');
       expect(eventTime).be.eq('$.time');
+    });
+
+    it('should support $or pattern in event pattern', () => {
+      const eventBridgeConfig = getEventBridgeConfigById('orPattern');
+      expect(eventBridgeConfig.Pattern.$or[0]).to.deep.equal({
+        detail: {
+          eventSource: ['saas.external'],
+        },
+      });
+      expect(eventBridgeConfig.Pattern.$or[1]).to.deep.equal({ source: ['aws.cloudformation'] });
     });
 
     it('should register created and delete event bus permissions for non default event bus', () => {
@@ -395,6 +426,7 @@ describe('EventBridgeEvents', () => {
       let ruleTarget;
       const schedule = 'rate(10 minutes)';
       const eventBusName = 'nondefault';
+      const description = 'My lambda description';
       const pattern = {
         source: ['aws.cloudformation'],
       };
@@ -489,6 +521,14 @@ describe('EventBridgeEvents', () => {
                       deadLetterQueueArn,
                     },
                   },
+                  {
+                    eventBridge: {
+                      eventBus: eventBusName,
+                      schedule,
+                      pattern,
+                      description,
+                    },
+                  },
                 ],
               },
             },
@@ -580,6 +620,11 @@ describe('EventBridgeEvents', () => {
           lambdaPermissionResource.Properties.SourceArn['Fn::Join'][1][5]['Fn::Join'][1][1]
         ).to.deep.equal(eventBusName);
       });
+
+      it('should correctly set ScheduleExpression on a created rule', () => {
+        const descriptionResource = getRuleResourceEndingWith(cfResources, '8');
+        expect(descriptionResource.Properties.Description).to.equal('My lambda description');
+      });
     });
 
     describe('when it references already existing EventBus or uses default one', () => {
@@ -593,6 +638,7 @@ describe('EventBridgeEvents', () => {
           configExt: {
             functions: {
               basic: {
+                name: 'event-bridge-lambda',
                 events: [
                   {
                     eventBridge: {
@@ -615,6 +661,14 @@ describe('EventBridgeEvents', () => {
                   {
                     eventBridge: {
                       schedule: 'rate(10 minutes)',
+                    },
+                  },
+                  {
+                    eventBridge: {
+                      eventBus: 'default',
+                      schedule: 'rate(10 minutes)',
+                      name: 'custom-event-name-test',
+                      enabled: false,
                     },
                   },
                 ],
@@ -665,6 +719,14 @@ describe('EventBridgeEvents', () => {
         expect(
           lambdaPermissionResource.Properties.SourceArn['Fn::Join'][1][5]['Fn::Join'][1]
         ).not.to.include('default');
+      });
+
+      it('should correctly set event name when set', () => {
+        const eventBridgeResource =
+          cfResources[naming.getEventBridgeRuleLogicalId('Eventbridgelambdarule5')];
+
+        const customName = 'custom-event-name-test';
+        expect(eventBridgeResource.Properties.Name).to.eq(customName);
       });
     });
   });

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+
+## [3.41.0] (2025-07-08)
+
+### Features
+
+- Add support for nodejs22.x runtime
+
 ## [3.40.0](https://github.com/serverless/serverless/compare/v3.39.0...v3.40.0) (2024-12-17)
 
 ### Bug Fixes
